@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treemapping de Linguagens de Programação usando a biblioteca D3.js.</title>
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .node {
+            border: solid 1px white;
+            font: 10px sans-serif;
+            line-height: 12px;
+            overflow: hidden;
+            position: absolute;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Carrega os dados do arquivo PHP
+        d3.json("data.php").then(function(data) {
+            const width = 960;
+            const height = 570;
+
+            // Cria o layout do treemap
+            const treemap = d3.treemap()
+                .size([width, height])
+                .padding(1)
+                .round(true);
+
+            // Converte os dados para o formato hierárquico esperado pelo treemap
+            const root = d3.hierarchy({children: data})
+                .sum(d => d.popularity)
+                .sort((a, b) => b.height - a.height || b.value - a.value);
+
+            // Aplica o layout aos dados
+            treemap(root);
+
+            // Seleciona o body e adiciona um elemento div para cada nó
+            const div = d3.select("body").append("div")
+                .style("position", "relative")
+                .style("width", `${width}px`)
+                .style("height", `${height}px`);
+
+            const node = div.selectAll(".node")
+                .data(root.leaves())
+                .enter().append("div")
+                .attr("class", "node")
+                .style("left", d => `${d.x0}px`)
+                .style("top", d => `${d.y0}px`)
+                .style("width", d => `${d.x1 - d.x0}px`)
+                .style("height", d => `${d.y1 - d.y0}px`)
+                .style("background", d => d3.scaleOrdinal(d3.schemeCategory10)(d.data.name));
+
+            // Adiciona o texto aos nós
+            node.append("div")
+                .attr("class", "label")
+                .text(d => d.data.name);
+
+            node.append("div")
+                .attr("class", "value")
+                .text(d => d.data.popularity);
+        });
+    </script>
+</body>
+</html>
